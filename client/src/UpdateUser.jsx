@@ -217,11 +217,15 @@ function UpdateUser() {
                             }}
                         >
                             <option value="">Select Education</option>
-                            <option value="B.Tech">B.Tech</option>
+                            <option value="Diploma">Diploma</option>
+                            <option value="BA">BA</option>
                             <option value="B.Sc">B.Sc</option>
                             <option value="BCA">BCA</option>
+                            <option value="B.Tech">B.Tech</option>
+                            <option value="MBA">MBA</option>
                             <option value="MCA">MCA</option>
                             <option value="M.Tech">M.Tech</option>
+                            <option value="Others">Others</option>
                         </select>
                     </div>
 
