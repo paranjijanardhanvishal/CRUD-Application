@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaUsers, FaMale, FaFemale, FaFileAlt, FaSearch, FaFilter, FaPlus, FaEdit, FaTrash, FaEye } from "react-icons/fa";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 function Users() {
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState("");
@@ -14,13 +16,13 @@ function Users() {
     const totalResumes = users.filter(user => user.resume).length;
 
     useEffect(() => {
-        axios.get("http://localhost:3001")
+        axios.get(API_URL)
             .then(result => setUsers(result.data))
             .catch(err => console.log(err));
     }, []);
 
     const handleDelete = (id) => {
-        axios.delete("http://localhost:3001/deleteUser/" + id)
+        axios.delete(`${API_URL}/deleteUser/` + id)
             .then(result => {
                 console.log(result);
                 setUsers(users.filter(user => user._id !== id));
@@ -205,7 +207,7 @@ function Users() {
                                         <td>
                                             {user.resume ? (
                                                 <a
-                                                    href={`http://localhost:3001/uploads/${user.resume}`}
+                                                    href={`${API_URL}/uploads/${user.resume}`}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="btn btn-sm text-white d-inline-flex align-items-center gap-1"

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 function UpdateUser() {
     const { id } = useParams();
 
@@ -16,7 +18,7 @@ function UpdateUser() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get("http://localhost:3001/getUser/" + id)
+        axios.get(`${API_URL}/getUser/` + id)
             .then(result => {
                 setName(result.data.name || "");
                 setEmail(result.data.email || "");
@@ -39,7 +41,7 @@ function UpdateUser() {
     };
 
     const removeResume = () => {
-        axios.put("http://localhost:3001/removeResume/" + id)
+        axios.put(`${API_URL}/removeResume/` + id)
             .then(() => {
                 alert("Resume Removed");
                 navigate("/");
@@ -64,7 +66,7 @@ function UpdateUser() {
         }
 
         axios.put(
-            "http://localhost:3001/updateUser/" + id,
+            `${API_URL}/updateUser/` + id,
             formData
         )
         .then(result => {

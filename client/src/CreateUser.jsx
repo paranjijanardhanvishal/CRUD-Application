@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 function CreateUser() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -44,7 +46,7 @@ function CreateUser() {
             formData.append("resume", file);
         }
 
-        axios.post("http://localhost:3001/create", formData)
+        axios.post(`${API_URL}/create`, formData)
             .then(result => {
                 console.log(result);
                 navigate("/");
