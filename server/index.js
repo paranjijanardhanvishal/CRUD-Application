@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-mongoose.connect('mongodb://127.0.0.1:27017/CRUD');
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/CRUD');
 
 app.get('/', (req, res) => {
     UserModel.find({})
@@ -105,6 +105,7 @@ app.put('/removeResume/:id', async (req, res) => {
     }
 });
 
-app.listen(3001, () => {
-    console.log('Server is running');
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
