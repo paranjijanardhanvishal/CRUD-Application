@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { fetchUserById, updateUser, removeResume } from "../../services/api";
+import { fetchUserById, updateUser, removeResume, updateRoleAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const EditUser = () => {
     const { id } = useParams();
+    const { user: authUser } = useAuth();
     const navigate = useNavigate();
 
     const [name, setName] = useState("");
@@ -12,18 +14,23 @@ const EditUser = () => {
     const [gender, setGender] = useState("");
     const [education, setEducation] = useState("");
     const [skills, setSkills] = useState([]);
-    const [file, setFile] = useState(null);
+    const [resume, setResume] = useState(null);
+    const [existingResume, setExistingResume] = useState("");
+    const [role, setRole] = useState("Visitor");
+    const [error, setError] = useState("");
 
     useEffect(() => {
         const loadUser = async () => {
-            const user = await fetchUserById(id);
-            if (user) {
-                setName(user.name || "");
-                setEmail(user.email || "");
-                setAge(user.age || "");
-                setGender(user.gender || "");
-                setEducation(user.education || "");
-                setSkills(user.skills || []);
+            const userData = await fetchUserById(id);
+            if (userData) {
+                setName(userData.name || "");
+                setEmail(userData.email || "");
+                setAge(userData.age || "");
+                setGender(userData.gender || "");
+                setEducation(userData.education || "");
+                setSkills(userData.skills || []);
+                setExistingResume(userData.resume || "");
+                setRole(userData.role || "Visitor");
             }
         };
         loadUser();
@@ -42,15 +49,15 @@ const EditUser = () => {
         try {
             await removeResume(id);
             alert("Resume Removed");
-            navigate("/users");
+            setExistingResume("");
         } catch (error) {
             console.log("Failed to remove resume");
         }
     };
 
-    const handleUpdate = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
+        setError("");
         const formData = new FormData();
         formData.append("name", name);
         formData.append("email", email);
@@ -59,12 +66,23 @@ const EditUser = () => {
         formData.append("education", education);
         formData.append("skills", JSON.stringify(skills));
 
-        if (file) {
-            formData.append("resume", file);
+        if (resume) {
+            formData.append("resume", resume);
         }
 
-        await updateUser(id, formData);
-        navigate("/users");
+        try {
+            await updateUser(id, formData);
+            if (authUser?.role === 'Admin') {
+                await updateRoleAPI(id, role);
+            }
+            if (authUser?.role === 'Visitor') {
+                navigate('/');
+            } else {
+                navigate("/users");
+            }
+        } catch (e) {
+            setError(e.response?.data?.message || "Error updating profile");
+        }
     };
 
     return (
@@ -76,15 +94,29 @@ const EditUser = () => {
             <h3 className="fw-bold text-primary mb-1">Update User</h3>
             <p className="text-muted mb-4">Modify existing user details</p>
 
-            <form onSubmit={handleUpdate}>
-                <div className="mb-3">
-                    <label className="fw-semibold mb-1">Name</label>
-                    <input type="text" className="form-control" value={name} required onChange={(e) => setName(e.target.value)} />
-                </div>
-
-                <div className="mb-3">
-                    <label className="fw-semibold mb-1">Email</label>
-                    <input type="email" className="form-control" value={email} required onChange={(e) => setEmail(e.target.value)} />
+            <form onSubmit={handleSubmit}>
+                {error && <div className="alert alert-danger p-2">{error}</div>}
+                
+                <div className="row g-3 mb-4">
+                    <div className="col-md-6">
+                        <label className="fw-semibold mb-2">Full Name</label>
+                        <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
+                    </div>
+                    <div className="col-md-6">
+                        <label className="fw-semibold mb-2">Email Address</label>
+                        <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    </div>
+                    
+                    {authUser?.role === 'Admin' && (
+                        <div className="col-md-12">
+                            <label className="fw-semibold mb-2 text-danger">User Role (Admin Only)</label>
+                            <select className="form-select border-danger" value={role} onChange={(e) => setRole(e.target.value)}>
+                                <option value="Admin">Admin</option>
+                                <option value="Editor">Editor</option>
+                                <option value="Visitor">Visitor</option>
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mb-3">
@@ -130,14 +162,26 @@ const EditUser = () => {
                     ))}
                 </div>
 
-                <div className="mb-4">
-                    <label className="fw-semibold mb-1">Resume (PDF)</label>
-                    <input type="file" className="form-control" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} />
-                </div>
+                {authUser?.role === 'Admin' && (
+                    <div className="mb-4 p-3 rounded" style={{ background: "#f8fafc", border: "1px dashed #cbd5e1" }}>
+                        <label className="fw-semibold mb-2 d-block">Resume (PDF)</label>
+                        
+                        {existingResume ? (
+                            <div className="d-flex align-items-center justify-content-between bg-white p-2 rounded border">
+                                <span className="text-muted small text-truncate me-2">Current: {existingResume}</span>
+                                <button type="button" className="btn btn-sm btn-outline-danger py-1 px-2" onClick={handleRemoveResume}>
+                                    Remove File
+                                </button>
+                            </div>
+                        ) : (
+                            <input type="file" className="form-control" accept=".pdf" onChange={(e) => setResume(e.target.files[0])} />
+                        )}
+                        <small className="text-muted mt-2 d-block">Only Admins can upload or remove resumes.</small>
+                    </div>
+                )}
 
                 <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-primary fw-bold py-2 flex-grow-1">Update User</button>
-                    <button type="button" className="btn btn-danger fw-bold py-2 px-4" onClick={handleRemoveResume}>Remove Resume</button>
                 </div>
             </form>
         </div>

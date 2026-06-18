@@ -1,9 +1,11 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { FaBars } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const Topbar = ({ toggleSidebar }) => {
     const location = useLocation();
+    const { user } = useAuth();
     const path = location.pathname;
 
     let pageTitle = "Dashboard";
@@ -28,7 +30,7 @@ const Topbar = ({ toggleSidebar }) => {
             </div>
             
             <div className="ms-auto d-none d-md-block text-muted">
-                <small>Admin / {pageTitle}</small>
+                <small>{user ? user.role : 'Guest'} / {pageTitle}</small>
             </div>
         </nav>
     );

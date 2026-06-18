@@ -9,9 +9,27 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+// Create an Axios instance to attach the token automatically
+const apiClient = axios.create({ baseURL: API_URL });
+apiClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => Promise.reject(error));
+
+export const loginAPI = async (credentials) => {
+    return await axios.post(`${API_URL}/auth/login`, credentials);
+};
+
+export const signupAPI = async (data) => {
+    return await axios.post(`${API_URL}/auth/signup`, data);
+};
+
 export const fetchUsers = async () => {
     try {
-        const result = await axios.get(API_URL);
+        const result = await apiClient.get('/');
         await saveStudentsToIndexedDB(result.data);
         return result.data;
     } catch (err) {
@@ -22,7 +40,7 @@ export const fetchUsers = async () => {
 
 export const fetchUserById = async (id) => {
     try {
-        const result = await axios.get(`${API_URL}/getUser/${id}`);
+        const result = await apiClient.get(`/getUser/${id}`);
         return result.data;
     } catch (err) {
         console.log("Offline mode: Fetching user from IndexedDB");
@@ -34,7 +52,7 @@ export const fetchUserById = async (id) => {
 export const createUser = async (formData) => {
     if (navigator.onLine) {
         try {
-            return await axios.post(`${API_URL}/create`, formData);
+            return await apiClient.post(`/create`, formData);
         } catch (error) {
             console.error(error);
             throw error;
@@ -60,7 +78,7 @@ export const createUser = async (formData) => {
 export const updateUser = async (id, formData) => {
     if (navigator.onLine) {
         try {
-            return await axios.put(`${API_URL}/updateUser/${id}`, formData);
+            return await apiClient.put(`/updateUser/${id}`, formData);
         } catch (error) {
             console.error(error);
             throw error;
@@ -86,7 +104,7 @@ export const updateUser = async (id, formData) => {
 export const deleteUser = async (id) => {
     if (navigator.onLine) {
         try {
-            await axios.delete(`${API_URL}/deleteUser/${id}`);
+            await apiClient.delete(`/deleteUser/${id}`);
             await deleteStudentFromIndexedDB(id);
         } catch (error) {
             console.error(error);
@@ -100,9 +118,13 @@ export const deleteUser = async (id) => {
 
 export const removeResume = async (id) => {
     if (navigator.onLine) {
-        return await axios.put(`${API_URL}/removeResume/${id}`);
+        return await apiClient.put(`/removeResume/${id}`);
     } else {
         alert("Cannot remove resume while offline");
         throw new Error("Offline");
     }
+};
+
+export const updateRoleAPI = async (id, role) => {
+    return await apiClient.put(`/updateRole/${id}`, { role });
 };

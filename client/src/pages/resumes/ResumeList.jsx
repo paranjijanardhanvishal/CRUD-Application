@@ -55,7 +55,7 @@ const ResumeList = () => {
                                 <td>
                                     {!user.resume.startsWith('blob:') && !user._id.startsWith('temp_') ? (
                                         <a
-                                            href={`${API_URL}/uploads/${user.resume}`}
+                                            href={`${API_URL}/api/resumes/${user.resume}?token=${localStorage.getItem('token')}`}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="btn btn-sm text-white d-inline-flex align-items-center gap-1 me-2"

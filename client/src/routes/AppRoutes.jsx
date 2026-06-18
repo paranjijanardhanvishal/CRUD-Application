@@ -1,7 +1,10 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
+import ProtectedRoute from './ProtectedRoute';
 
+import Login from '../pages/auth/Login';
+import Signup from '../pages/auth/Signup';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import UserList from '../pages/users/UserList';
 import AddUser from '../pages/users/AddUser';
@@ -13,18 +16,21 @@ import AddResume from '../pages/resumes/AddResume';
 
 const AppRoutes = () => {
     return (
-        <MainLayout>
-            <Routes>
-                <Route path="/" element={<DashboardPage />} />
-                <Route path="/users" element={<UserList />} />
-                <Route path="/users/add" element={<AddUser />} />
-                <Route path="/users/edit/:id" element={<EditUser />} />
-                <Route path="/skills" element={<SkillList />} />
-                <Route path="/skills/add" element={<AddSkill />} />
-                <Route path="/resumes" element={<ResumeList />} />
-                <Route path="/resumes/add" element={<AddResume />} />
-            </Routes>
-        </MainLayout>
+        <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            
+            <Route path="/" element={<ProtectedRoute><MainLayout><DashboardPage /></MainLayout></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute allowedRoles={['Admin', 'Editor']}><MainLayout><UserList /></MainLayout></ProtectedRoute>} />
+            <Route path="/users/add" element={<ProtectedRoute allowedRoles={['Admin', 'Editor']}><MainLayout><AddUser /></MainLayout></ProtectedRoute>} />
+            <Route path="/users/edit/:id" element={<ProtectedRoute><MainLayout><EditUser /></MainLayout></ProtectedRoute>} />
+            
+            <Route path="/skills" element={<ProtectedRoute allowedRoles={['Admin', 'Editor']}><MainLayout><SkillList /></MainLayout></ProtectedRoute>} />
+            <Route path="/skills/add" element={<ProtectedRoute allowedRoles={['Admin', 'Editor']}><MainLayout><AddSkill /></MainLayout></ProtectedRoute>} />
+            
+            <Route path="/resumes" element={<ProtectedRoute allowedRoles={['Admin']}><MainLayout><ResumeList /></MainLayout></ProtectedRoute>} />
+            <Route path="/resumes/add" element={<ProtectedRoute allowedRoles={['Admin']}><MainLayout><AddResume /></MainLayout></ProtectedRoute>} />
+        </Routes>
     );
 };
 

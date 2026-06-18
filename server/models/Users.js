@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
     education: String,
     skills: [String],
     resume: String,
-    
+    password: { type: String, required: false }, // Optional for older records, required for new signups
+    role: { type: String, enum: ['Admin', 'Editor', 'Visitor'], default: 'Visitor' }
 });
 
 const UserModel = mongoose.model('users', userSchema);

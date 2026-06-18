@@ -79,6 +79,7 @@ const UserList = () => {
                             <th>Email</th>
                             <th>Age</th>
                             <th>Gender</th>
+                            <th>Role</th>
                             <th>Education</th>
                             <th>Resume</th>
                             <th style={{ minWidth: "200px" }}>Skills</th>
@@ -104,12 +105,21 @@ const UserList = () => {
                                     <td className="fw-semibold">{user.name}</td>
                                     <td>{user.email}</td>
                                     <td>{user.age}</td>
-                                    <td>{user.gender}</td>
+                                    <td>
+                                        <span className={`badge ${user.gender?.toLowerCase() === 'female' ? 'bg-danger' : 'bg-success'}`}>
+                                            {user.gender}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`badge ${user.role === 'Admin' ? 'bg-dark' : user.role === 'Editor' ? 'bg-primary' : 'bg-secondary'}`}>
+                                            {user.role || 'Visitor'}
+                                        </span>
+                                    </td>
                                     <td>{user.education}</td>
                                     <td>
                                         {user.resume && !user.resume.startsWith('blob:') && user._id && !user._id.startsWith('temp_') ? (
                                             <a
-                                                href={`${API_URL}/uploads/${user.resume}`}
+                                                href={`${API_URL}/api/resumes/${user.resume}?token=${localStorage.getItem('token')}`}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="btn btn-sm text-white d-inline-flex align-items-center gap-1"

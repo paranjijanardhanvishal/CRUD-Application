@@ -1,61 +1,121 @@
-import React, { useEffect, useState } from 'react';
-import { FaUsers, FaMale, FaFemale, FaFileAlt } from 'react-icons/fa';
-import { fetchUsers } from '../../services/api';
+import React, { useEffect, useState } from "react";
+import { fetchUsers, fetchUserById } from "../../services/api";
+import { FaUsers, FaMale, FaFemale, FaFileAlt, FaUser } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 const DashboardPage = () => {
-    const [users, setUsers] = useState([]);
+    const [stats, setStats] = useState({
+        total: 0,
+        male: 0,
+        female: 0,
+        withResume: 0
+    });
+    const { user } = useAuth();
+    const [personalStats, setPersonalStats] = useState(null);
 
     useEffect(() => {
-        const load = async () => {
-            const data = await fetchUsers();
-            if (data) setUsers(data);
+        const loadData = async () => {
+            if (user?.role === 'Visitor') {
+                try {
+                    const data = await fetchUserById(user.id);
+                    setPersonalStats(data);
+                } catch(e) {}
+            } else if (user) {
+                const data = await fetchUsers();
+                if (data) {
+                    setStats({
+                        total: data.length,
+                        male: data.filter(u => u.gender?.toLowerCase() === 'male').length,
+                        female: data.filter(u => u.gender?.toLowerCase() === 'female').length,
+                        withResume: data.filter(u => u.resume).length
+                    });
+                }
+            }
         };
-        load();
-    }, []);
+        loadData();
+    }, [user]);
 
-    const totalUsers = users.length;
-    const totalMales = users.filter(user => user.gender?.toLowerCase() === "male").length;
-    const totalFemales = users.filter(user => user.gender?.toLowerCase() === "female").length;
-    const totalResumes = users.filter(user => user.resume).length;
+    if (user?.role === 'Visitor') {
+        return (
+            <div className="container-fluid">
+                <h2 className="mb-4 fw-bold text-dark">Welcome, {user.name}!</h2>
+                <div className="row g-4">
+                    <div className="col-12 col-md-6 col-lg-3">
+                        <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)" }}>
+                            <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 className="text-primary text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Profile Status</h6>
+                                    <h3 className="fw-bolder text-dark mb-0">{personalStats?.age ? 'Completed' : 'Incomplete'}</h3>
+                                </div>
+                                <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: "60px", height: "60px", fontSize: "1.5rem" }}>
+                                    <FaUser />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="bg-white p-4 rounded shadow-sm" style={{ border: "1px solid #dbeafe" }}>
-            <div className="text-center mb-5 mt-3">
-                <h1 className="fw-bold" style={{ color: "#2563eb", fontSize: "2.5rem" }}>
-                    Resume Management System
-                </h1>
-                <p style={{ color: "#64748b", fontSize: "1.1rem" }}>
-                    Overview of your users, skills, and resumes
-                </p>
-            </div>
+        <div className="container-fluid">
+            <h2 className="mb-4 fw-bold text-dark">Overview Statistics</h2>
+            
+            <div className="row g-4">
+                <div className="col-12 col-md-6 col-lg-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)" }}>
+                        <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 className="text-primary text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Total Users</h6>
+                                <h2 className="fw-bolder text-dark mb-0">{stats.total}</h2>
+                            </div>
+                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: "60px", height: "60px", fontSize: "1.5rem" }}>
+                                <FaUsers />
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div className="row g-4 mb-3">
-                <div className="col-md-3 col-sm-6">
-                    <div className="card text-center p-4 border-0 h-100" style={{ background: "#eff6ff", borderRadius: "16px", boxShadow: "0 4px 15px rgba(59,130,246,0.1)" }}>
-                        <FaUsers style={{ fontSize: "2.5rem", color: "#60a5fa", margin: "0 auto 15px" }} />
-                        <h2 style={{ color: "#2563eb", margin: 0, fontWeight: "700" }}>{totalUsers}</h2>
-                        <span style={{ color: "#64748b", fontWeight: "600" }}>Total Users</span>
+                <div className="col-12 col-md-6 col-lg-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)" }}>
+                        <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 className="text-success text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Male Users</h6>
+                                <h2 className="fw-bolder text-dark mb-0">{stats.male}</h2>
+                            </div>
+                            <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: "60px", height: "60px", fontSize: "1.5rem" }}>
+                                <FaMale />
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="col-md-3 col-sm-6">
-                    <div className="card text-center p-4 border-0 h-100" style={{ background: "#eff6ff", borderRadius: "16px", boxShadow: "0 4px 15px rgba(59,130,246,0.1)" }}>
-                        <FaMale style={{ fontSize: "2.5rem", color: "#60a5fa", margin: "0 auto 15px" }} />
-                        <h2 style={{ color: "#2563eb", margin: 0, fontWeight: "700" }}>{totalMales}</h2>
-                        <span style={{ color: "#64748b", fontWeight: "600" }}>Males</span>
+
+                <div className="col-12 col-md-6 col-lg-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)" }}>
+                        <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 className="text-danger text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Female Users</h6>
+                                <h2 className="fw-bolder text-dark mb-0">{stats.female}</h2>
+                            </div>
+                            <div className="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: "60px", height: "60px", fontSize: "1.5rem" }}>
+                                <FaFemale />
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="col-md-3 col-sm-6">
-                    <div className="card text-center p-4 border-0 h-100" style={{ background: "#eff6ff", borderRadius: "16px", boxShadow: "0 4px 15px rgba(59,130,246,0.1)" }}>
-                        <FaFemale style={{ fontSize: "2.5rem", color: "#60a5fa", margin: "0 auto 15px" }} />
-                        <h2 style={{ color: "#2563eb", margin: 0, fontWeight: "700" }}>{totalFemales}</h2>
-                        <span style={{ color: "#64748b", fontWeight: "600" }}>Females</span>
-                    </div>
-                </div>
-                <div className="col-md-3 col-sm-6">
-                    <div className="card text-center p-4 border-0 h-100" style={{ background: "#eff6ff", borderRadius: "16px", boxShadow: "0 4px 15px rgba(59,130,246,0.1)" }}>
-                        <FaFileAlt style={{ fontSize: "2.5rem", color: "#60a5fa", margin: "0 auto 15px" }} />
-                        <h2 style={{ color: "#2563eb", margin: 0, fontWeight: "700" }}>{totalResumes}</h2>
-                        <span style={{ color: "#64748b", fontWeight: "600" }}>Resumes</span>
+
+                <div className="col-12 col-md-6 col-lg-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)" }}>
+                        <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 className="text-warning text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Resumes Uploaded</h6>
+                                <h2 className="fw-bolder text-dark mb-0">{stats.withResume}</h2>
+                            </div>
+                            <div className="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: "60px", height: "60px", fontSize: "1.5rem" }}>
+                                <FaFileAlt />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
