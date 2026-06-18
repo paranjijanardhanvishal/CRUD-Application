@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { useNetwork } from "./context/NetworkContext";
+import { addPendingOperation, updateStudentInIndexedDB } from "./utils/indexedDB";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 function CreateUser() {
+    const { isOnline } = useNetwork();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [age, setAge] = useState("");
@@ -25,7 +28,7 @@ function CreateUser() {
         }
     };
 
-    const Submit = (e) => {
+    const Submit = async (e) => {
         e.preventDefault();
 
         if (skills.length === 0) {
@@ -46,12 +49,27 @@ function CreateUser() {
             formData.append("resume", file);
         }
 
-        axios.post(`${API_URL}/create`, formData)
-            .then(result => {
+        if (isOnline) {
+            try {
+                const result = await axios.post(`${API_URL}/create`, formData);
                 console.log(result);
                 navigate("/");
-            })
-            .catch(err => console.log(err));
+            } catch (err) {
+                console.log(err);
+            }
+        } else {
+            const tempId = 'temp_' + Date.now();
+            await addPendingOperation({
+                type: 'CREATE',
+                payload: { name, email, age, gender, education, skills, file }
+            });
+            await updateStudentInIndexedDB({
+                _id: tempId,
+                name, email, age, gender, education, skills,
+                resume: file ? file.name : null
+            });
+            navigate("/");
+        }
     };
 
     return (

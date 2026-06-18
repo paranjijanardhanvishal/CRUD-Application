@@ -2,10 +2,13 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaUsers, FaMale, FaFemale, FaFileAlt, FaSearch, FaFilter, FaPlus, FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { useNetwork } from "./context/NetworkContext";
+import { saveStudentsToIndexedDB, getStudentsFromIndexedDB, deleteStudentFromIndexedDB, addPendingOperation } from "./utils/indexedDB";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 function Users() {
+    const { isOnline } = useNetwork();
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState("");
     const [filterOption, setFilterOption] = useState("All");
@@ -16,18 +19,34 @@ function Users() {
     const totalResumes = users.filter(user => user.resume).length;
 
     useEffect(() => {
-        axios.get(API_URL)
-            .then(result => setUsers(result.data))
-            .catch(err => console.log(err));
+        const fetchUsers = async () => {
+            try {
+                const result = await axios.get(API_URL);
+                setUsers(result.data);
+                await saveStudentsToIndexedDB(result.data);
+            } catch (err) {
+                console.log("Offline mode: Fetching from IndexedDB");
+                const localUsers = await getStudentsFromIndexedDB();
+                setUsers(localUsers);
+            }
+        };
+        fetchUsers();
     }, []);
 
-    const handleDelete = (id) => {
-        axios.delete(`${API_URL}/deleteUser/` + id)
-            .then(result => {
-                console.log(result);
+    const handleDelete = async (id) => {
+        if (isOnline) {
+            try {
+                await axios.delete(`${API_URL}/deleteUser/` + id);
                 setUsers(users.filter(user => user._id !== id));
-            })
-            .catch(err => console.log(err));
+                await deleteStudentFromIndexedDB(id);
+            } catch (err) {
+                console.log(err);
+            }
+        } else {
+            await addPendingOperation({ type: 'DELETE', payload: { id } });
+            setUsers(users.filter(user => user._id !== id));
+            await deleteStudentFromIndexedDB(id);
+        }
     };
 
     return (

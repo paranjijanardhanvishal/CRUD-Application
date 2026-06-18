@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { useNetwork } from "./context/NetworkContext";
+import { getStudentsFromIndexedDB, addPendingOperation, updateStudentInIndexedDB } from "./utils/indexedDB";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 function UpdateUser() {
+    const { isOnline } = useNetwork();
     const { id } = useParams();
 
     const [name, setName] = useState("");
@@ -18,16 +21,30 @@ function UpdateUser() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get(`${API_URL}/getUser/` + id)
-            .then(result => {
+        const fetchUser = async () => {
+            try {
+                const result = await axios.get(`${API_URL}/getUser/` + id);
                 setName(result.data.name || "");
                 setEmail(result.data.email || "");
                 setAge(result.data.age || "");
                 setGender(result.data.gender || "");
                 setEducation(result.data.education || "");
                 setSkills(result.data.skills || []);
-            })
-            .catch(err => console.log(err));
+            } catch (err) {
+                console.log("Offline mode: Fetching user from IndexedDB");
+                const localUsers = await getStudentsFromIndexedDB();
+                const user = localUsers.find(u => u._id === id);
+                if (user) {
+                    setName(user.name || "");
+                    setEmail(user.email || "");
+                    setAge(user.age || "");
+                    setGender(user.gender || "");
+                    setEducation(user.education || "");
+                    setSkills(user.skills || []);
+                }
+            }
+        };
+        fetchUser();
     }, [id]);
 
     const handleSkillChange = (e) => {
@@ -49,7 +66,7 @@ function UpdateUser() {
             .catch(err => console.log(err));
     };
 
-    const Update = (e) => {
+    const Update = async (e) => {
         e.preventDefault();
 
         const formData = new FormData();
@@ -65,15 +82,26 @@ function UpdateUser() {
             formData.append("resume", file);
         }
 
-        axios.put(
-            `${API_URL}/updateUser/` + id,
-            formData
-        )
-        .then(result => {
-            console.log(result);
+        if (isOnline) {
+            try {
+                const result = await axios.put(`${API_URL}/updateUser/` + id, formData);
+                console.log(result);
+                navigate("/");
+            } catch (err) {
+                console.log(err);
+            }
+        } else {
+            await addPendingOperation({
+                type: 'UPDATE',
+                payload: { id, name, email, age, gender, education, skills, file }
+            });
+            await updateStudentInIndexedDB({
+                _id: id,
+                name, email, age, gender, education, skills,
+                resume: file ? file.name : null
+            });
             navigate("/");
-        })
-        .catch(err => console.log(err));
+        }
     };
 
     return (
