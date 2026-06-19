@@ -60,8 +60,9 @@ const upload = multer({ storage });
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/CRUD');
 
-app.get('/', verifyToken, verifyAdmin, (req, res) => {
-    UserModel.find({})
+app.get('/', verifyToken, (req, res) => {
+    const query = req.user.role === 'Admin' ? {} : { _id: req.user.id };
+    UserModel.find(query)
         .then(users => res.json(users))
         .catch(err => res.json(err));
 });
@@ -78,7 +79,7 @@ app.get('/getUser/:id', verifyToken, (req, res) => {
         .catch(err => res.json(err));
 });
 
-app.post('/create', verifyToken, verifyAdmin, upload.single('resume'), (req, res) => {
+app.post('/create', verifyToken, upload.single('resume'), (req, res) => {
 
     const userData = {
         name: req.body.name,
