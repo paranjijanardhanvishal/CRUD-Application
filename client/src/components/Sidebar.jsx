@@ -7,41 +7,49 @@ const Sidebar = ({ isOpen }) => {
     const { user, logout } = useAuth();
     
     return (
-        <div className={`app-sidebar shadow-sm h-100 p-3 position-fixed top-0 start-0 z-3 transition-all ${isOpen ? 'translate-middle-x-0' : '-translate-middle-x-full d-none d-md-block'}`} style={{ width: "250px", zIndex: 1000, transition: "transform 0.3s ease" }}>
+        <div className={`shadow-sm h-100 p-3 position-fixed top-0 start-0 z-3 transition-all ${isOpen ? 'translate-middle-x-0' : '-translate-middle-x-full d-none d-md-block'}`} 
+             style={{ 
+                width: "250px", 
+                zIndex: 1000, 
+                transition: "transform 0.3s ease",
+                backgroundColor: "#1a1a1a",
+                color: "#ffffff",
+                borderRight: "1px solid #333"
+             }}>
             <h4 className="fw-bold text-primary mb-4 mt-2 d-flex align-items-center gap-2">
                 <FaTachometerAlt />
                 Admin Panel
             </h4>
 
             <div className="d-flex flex-column gap-1">
-                <p className="text-muted small fw-bold text-uppercase mb-2 mt-3 ps-2">Dashboard</p>
-                <NavLink to="/" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'text-dark hover-bg-light'}`}>
+                <p className="small fw-bold text-uppercase mb-2 mt-3 ps-2" style={{ color: '#a3a3a3' }}>Dashboard</p>
+                <NavLink to="/" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'hover-bg-light'}`} style={{ color: '#ffffff' }}>
                     <FaTachometerAlt /> Overview
                 </NavLink>
 
                 {user && (user.role === 'Admin' || user.role === 'User') && (
                     <>
-                        <p className="text-muted small fw-bold text-uppercase mb-2 mt-3 ps-2">Users</p>
-                        <NavLink to="/users/add" className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'text-dark hover-bg-light'}`}>
+                        <p className="small fw-bold text-uppercase mb-2 mt-3 ps-2" style={{ color: '#a3a3a3' }}>Users</p>
+                        <NavLink to="/users/add" className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'hover-bg-light'}`} style={{ color: '#ffffff' }}>
                             <FaUserPlus /> Add User
                         </NavLink>
-                        <NavLink to="/users" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'text-dark hover-bg-light'}`}>
+                        <NavLink to="/users" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'hover-bg-light'}`} style={{ color: '#ffffff' }}>
                             <FaUsers /> User List
                         </NavLink>
 
-                        <p className="text-muted small fw-bold text-uppercase mb-2 mt-3 ps-2">Skills</p>
-                        <NavLink to="/skills/add" className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'text-dark hover-bg-light'}`}>
+                        <p className="small fw-bold text-uppercase mb-2 mt-3 ps-2" style={{ color: '#a3a3a3' }}>Skills</p>
+                        <NavLink to="/skills/add" className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'hover-bg-light'}`} style={{ color: '#ffffff' }}>
                             <FaTools /> Add Skill
                         </NavLink>
-                        <NavLink to="/skills" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'text-dark hover-bg-light'}`}>
+                        <NavLink to="/skills" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'hover-bg-light'}`} style={{ color: '#ffffff' }}>
                             <FaTools /> Skill List
                         </NavLink>
                         
-                        <p className="text-muted small fw-bold text-uppercase mb-2 mt-3 ps-2">Resumes</p>
-                        <NavLink to="/resumes/add" className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'text-dark hover-bg-light'}`}>
+                        <p className="small fw-bold text-uppercase mb-2 mt-3 ps-2" style={{ color: '#a3a3a3' }}>Resumes</p>
+                        <NavLink to="/resumes/add" className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'hover-bg-light'}`} style={{ color: '#ffffff' }}>
                             <FaFileAlt /> Add Resume
                         </NavLink>
-                        <NavLink to="/resumes" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'text-dark hover-bg-light'}`}>
+                        <NavLink to="/resumes" end className={({isActive}) => `text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 ${isActive ? 'bg-primary text-white' : 'hover-bg-light'}`} style={{ color: '#ffffff' }}>
                             <FaFileAlt /> Resume List
                         </NavLink>
                     </>
@@ -49,8 +57,8 @@ const Sidebar = ({ isOpen }) => {
 
                 {user && user.role === 'Admin' && (
                     <>
-                        <p className="text-muted small fw-bold text-uppercase mb-2 mt-3 ps-2">Admin</p>
-                        <NavLink to="/users" className="text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 text-dark hover-bg-light">
+                        <p className="small fw-bold text-uppercase mb-2 mt-3 ps-2" style={{ color: '#a3a3a3' }}>Admin</p>
+                        <NavLink to="/users" className="text-decoration-none p-2 rounded fw-semibold d-flex align-items-center gap-2 hover-bg-light" style={{ color: '#ffffff' }}>
                             <FaUsers /> Role Management
                         </NavLink>
                     </>

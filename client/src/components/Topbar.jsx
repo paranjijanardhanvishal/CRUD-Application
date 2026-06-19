@@ -1,13 +1,11 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaBars, FaSun, FaMoon } from 'react-icons/fa';
+import { FaBars } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 
 const Topbar = ({ toggleSidebar }) => {
     const location = useLocation();
     const { user } = useAuth();
-    const { theme, toggleTheme } = useTheme();
     const path = location.pathname;
 
     let pageTitle = "Dashboard";
@@ -32,13 +30,6 @@ const Topbar = ({ toggleSidebar }) => {
             </div>
             
             <div className="ms-auto d-flex align-items-center gap-3">
-                <button 
-                    onClick={toggleTheme} 
-                    className="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
-                    style={{ width: "36px", height: "36px", borderRadius: "50%", padding: 0 }}
-                >
-                    {theme === 'light' ? <FaMoon /> : <FaSun />}
-                </button>
                 <div className="d-none d-md-block text-muted">
                     <small>{user ? user.role : 'Guest'} / {pageTitle}</small>
                 </div>
