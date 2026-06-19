@@ -17,9 +17,52 @@ body.dark-mode .text-muted {
   color: #adb5bd !important;
 }
 
-body.dark-mode .navbar, body.dark-mode .sidebar, body.dark-mode .bg-light {
+body.dark-mode .navbar, body.dark-mode .bg-light {
   background-color: #1a1a1a !important;
   border-color: #333 !important;
+}
+
+/* --- APP SIDEBAR CUSTOM THEME (INVERTED) --- */
+
+/* LIGHT MODE: Sidebar Black */
+.app-sidebar {
+  background-color: #1a1a1a !important; /* Black */
+  color: #ffffff !important;
+  border-right: 1px solid #333 !important;
+}
+
+.app-sidebar .text-muted {
+  color: #a3a3a3 !important;
+}
+
+.app-sidebar .text-dark {
+  color: #ffffff !important;
+}
+
+.app-sidebar .hover-bg-light:hover {
+  background-color: #333333 !important;
+  color: #ffffff !important;
+}
+
+/* DARK MODE: Sidebar White */
+body.dark-mode .app-sidebar {
+  background-color: #ffffff !important; /* White */
+  color: #000000 !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+body.dark-mode .app-sidebar h4,
+body.dark-mode .app-sidebar .text-dark {
+  color: #000000 !important;
+}
+
+body.dark-mode .app-sidebar .text-muted {
+  color: #6c757d !important;
+}
+
+body.dark-mode .app-sidebar .hover-bg-light:hover {
+  background-color: #f8f9fa !important;
+  color: #000000 !important;
 }
 
 body.dark-mode .table {

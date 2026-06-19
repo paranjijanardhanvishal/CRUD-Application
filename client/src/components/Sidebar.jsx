@@ -7,7 +7,7 @@ const Sidebar = ({ isOpen }) => {
     const { user, logout } = useAuth();
     
     return (
-        <div className={`bg-white shadow-sm h-100 p-3 position-fixed top-0 start-0 z-3 transition-all ${isOpen ? 'translate-middle-x-0' : '-translate-middle-x-full d-none d-md-block'}`} style={{ width: "250px", borderRight: "1px solid #e2e8f0", zIndex: 1000, transition: "transform 0.3s ease" }}>
+        <div className={`app-sidebar shadow-sm h-100 p-3 position-fixed top-0 start-0 z-3 transition-all ${isOpen ? 'translate-middle-x-0' : '-translate-middle-x-full d-none d-md-block'}`} style={{ width: "250px", zIndex: 1000, transition: "transform 0.3s ease" }}>
             <h4 className="fw-bold text-primary mb-4 mt-2 d-flex align-items-center gap-2">
                 <FaTachometerAlt />
                 Admin Panel
