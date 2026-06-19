@@ -24,16 +24,7 @@ const verifyAdmin = (req, res, next) => {
     }
 };
 
-const verifyEditorOrAdmin = (req, res, next) => {
-    if (req.user && (req.user.role === 'Admin' || req.user.role === 'Editor')) {
-        next();
-    } else {
-        res.status(403).json({ message: "Require Admin or Editor Role!" });
-    }
-};
-
 module.exports = {
     verifyToken,
-    verifyAdmin,
-    verifyEditorOrAdmin
+    verifyAdmin
 };

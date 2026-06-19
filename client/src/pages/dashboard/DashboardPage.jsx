@@ -15,12 +15,12 @@ const DashboardPage = () => {
 
     useEffect(() => {
         const loadData = async () => {
-            if (user?.role === 'Visitor') {
+            if (user?.role === 'User') {
                 try {
                     const data = await fetchUserById(user.id);
                     setPersonalStats(data);
                 } catch(e) {}
-            } else if (user) {
+            } else if (user?.role === 'Admin') {
                 const data = await fetchUsers();
                 if (data) {
                     setStats({
@@ -35,13 +35,13 @@ const DashboardPage = () => {
         loadData();
     }, [user]);
 
-    if (user?.role === 'Visitor') {
+    if (user?.role === 'User') {
         return (
             <div className="container-fluid">
                 <h2 className="mb-4 fw-bold text-dark">Welcome, {user.name}!</h2>
                 <div className="row g-4">
                     <div className="col-12 col-md-6 col-lg-3">
-                        <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)" }}>
+                        <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
                             <div className="card-body p-4 d-flex align-items-center justify-content-between">
                                 <div>
                                     <h6 className="text-primary text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Profile Status</h6>
@@ -64,7 +64,7 @@ const DashboardPage = () => {
             
             <div className="row g-4">
                 <div className="col-12 col-md-6 col-lg-3">
-                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)" }}>
+                    <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
                         <div className="card-body p-4 d-flex align-items-center justify-content-between">
                             <div>
                                 <h6 className="text-primary text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Total Users</h6>
@@ -78,7 +78,7 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="col-12 col-md-6 col-lg-3">
-                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)" }}>
+                    <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
                         <div className="card-body p-4 d-flex align-items-center justify-content-between">
                             <div>
                                 <h6 className="text-success text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Male Users</h6>
@@ -92,7 +92,7 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="col-12 col-md-6 col-lg-3">
-                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)" }}>
+                    <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
                         <div className="card-body p-4 d-flex align-items-center justify-content-between">
                             <div>
                                 <h6 className="text-danger text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Female Users</h6>
@@ -106,7 +106,7 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="col-12 col-md-6 col-lg-3">
-                    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)" }}>
+                    <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
                         <div className="card-body p-4 d-flex align-items-center justify-content-between">
                             <div>
                                 <h6 className="text-warning text-uppercase fw-bold mb-2" style={{ letterSpacing: "1px" }}>Resumes Uploaded</h6>

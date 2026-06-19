@@ -9,7 +9,11 @@ const userSchema = new mongoose.Schema({
     skills: [String],
     resume: String,
     password: { type: String, required: false }, // Optional for older records, required for new signups
-    role: { type: String, enum: ['Admin', 'Editor', 'Visitor'], default: 'Visitor' }
+    role: {
+        type: String,
+        enum: ['Admin', 'User'],
+        default: 'User'
+    }
 });
 
 const UserModel = mongoose.model('users', userSchema);

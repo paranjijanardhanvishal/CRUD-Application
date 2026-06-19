@@ -111,8 +111,8 @@ const UserList = () => {
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`badge ${user.role === 'Admin' ? 'bg-dark' : user.role === 'Editor' ? 'bg-primary' : 'bg-secondary'}`}>
-                                            {user.role || 'Visitor'}
+                                        <span className={`badge ${user.role === 'Admin' ? 'bg-dark' : 'bg-secondary'}`}>
+                                            {user.role || 'User'}
                                         </span>
                                     </td>
                                     <td>{user.education}</td>

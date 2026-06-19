@@ -21,7 +21,7 @@ router.post('/signup', async (req, res) => {
             name: username,
             email,
             password: hashedPassword,
-            role: 'Visitor'
+            role: 'User'
         });
 
         res.status(201).json({ message: "User registered successfully", user: { id: newUser._id, email: newUser.email, role: newUser.role } });

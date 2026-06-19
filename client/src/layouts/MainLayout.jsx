@@ -8,7 +8,7 @@ const MainLayout = ({ children }) => {
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     return (
-        <div className="d-flex" style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <div className="d-flex bg-light" style={{ minHeight: '100vh' }}>
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
             
             <div 

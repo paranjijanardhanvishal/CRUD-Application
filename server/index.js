@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const UserModel = require('./models/Users');
 require('dotenv').config();
-const { verifyToken, verifyAdmin, verifyEditorOrAdmin } = require('./middleware/auth');
+const { verifyToken, verifyAdmin } = require('./middleware/auth');
 const bcrypt = require('bcryptjs');
 
 const app = express();
@@ -25,10 +25,21 @@ app.get('/api/resumes/:filename', (req, res) => {
     if (!token) return res.status(403).json({ message: "No token provided" });
 
     const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key';
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err || decoded.role !== 'Admin') {
-            return res.status(403).json({ message: "Unauthorized or not Admin" });
+    jwt.verify(token, JWT_SECRET, async (err, decoded) => {
+        if (err) return res.status(403).json({ message: "Unauthorized" });
+
+        if (decoded.role !== 'Admin') {
+            // Check if the file belongs to the user
+            try {
+                const user = await UserModel.findOne({ _id: decoded.id, resume: req.params.filename });
+                if (!user) {
+                    return res.status(403).json({ message: "Unauthorized. You do not own this resume." });
+                }
+            } catch (error) {
+                return res.status(500).json({ message: "Server error" });
+            }
         }
+
         const filePath = path.join(__dirname, 'uploads', req.params.filename);
         res.sendFile(filePath, err => {
             if (err) res.status(404).send('File not found');
@@ -49,7 +60,7 @@ const upload = multer({ storage });
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/CRUD');
 
-app.get('/', verifyToken, verifyEditorOrAdmin, (req, res) => {
+app.get('/', verifyToken, verifyAdmin, (req, res) => {
     UserModel.find({})
         .then(users => res.json(users))
         .catch(err => res.json(err));
@@ -58,7 +69,7 @@ app.get('/', verifyToken, verifyEditorOrAdmin, (req, res) => {
 app.get('/getUser/:id', verifyToken, (req, res) => {
     const id = req.params.id;
 
-    if (req.user.role === 'Visitor' && req.user.id !== id) {
+    if (req.user.role === 'User' && req.user.id !== id) {
         return res.status(403).json({ message: "Access Denied" });
     }
 
@@ -67,10 +78,7 @@ app.get('/getUser/:id', verifyToken, (req, res) => {
         .catch(err => res.json(err));
 });
 
-app.post('/create', verifyToken, verifyEditorOrAdmin, upload.single('resume'), (req, res) => {
-    if (req.file && req.user.role !== 'Admin') {
-        return res.status(403).json({ message: "Only Admin can upload resumes" });
-    }
+app.post('/create', verifyToken, verifyAdmin, upload.single('resume'), (req, res) => {
 
     const userData = {
         name: req.body.name,
@@ -90,12 +98,8 @@ app.post('/create', verifyToken, verifyEditorOrAdmin, upload.single('resume'), (
 app.put('/updateUser/:id', verifyToken, upload.single('resume'), (req, res) => {
     const id = req.params.id;
 
-    if (req.user.role === 'Visitor' && req.user.id !== id) {
+    if (req.user.role === 'User' && req.user.id !== id) {
         return res.status(403).json({ message: "Access Denied" });
-    }
-
-    if (req.file && req.user.role !== 'Admin') {
-        return res.status(403).json({ message: "Only Admin can upload resumes" });
     }
 
     const updateData = {
@@ -116,7 +120,7 @@ app.put('/updateUser/:id', verifyToken, upload.single('resume'), (req, res) => {
         .catch(err => res.json(err));
 });
 
-app.delete('/deleteUser/:id', verifyToken, verifyEditorOrAdmin, (req, res) => {
+app.delete('/deleteUser/:id', verifyToken, verifyAdmin, (req, res) => {
     const id = req.params.id;
 
     UserModel.findByIdAndDelete(id)
@@ -166,7 +170,7 @@ app.put('/removeResume/:id', verifyToken, verifyAdmin, async (req, res) => {
 app.put('/updateRole/:id', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const { role } = req.body;
-        if (!['Admin', 'Editor', 'Visitor'].includes(role)) {
+        if (!['Admin', 'User'].includes(role)) {
             return res.status(400).json({ message: "Invalid role" });
         }
         const updatedUser = await UserModel.findByIdAndUpdate(

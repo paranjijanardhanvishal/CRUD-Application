@@ -16,7 +16,7 @@ const EditUser = () => {
     const [skills, setSkills] = useState([]);
     const [resume, setResume] = useState(null);
     const [existingResume, setExistingResume] = useState("");
-    const [role, setRole] = useState("Visitor");
+    const [role, setRole] = useState("User");
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -30,7 +30,7 @@ const EditUser = () => {
                 setEducation(userData.education || "");
                 setSkills(userData.skills || []);
                 setExistingResume(userData.resume || "");
-                setRole(userData.role || "Visitor");
+                setRole(userData.role || "User");
             }
         };
         loadUser();
@@ -75,7 +75,7 @@ const EditUser = () => {
             if (authUser?.role === 'Admin') {
                 await updateRoleAPI(id, role);
             }
-            if (authUser?.role === 'Visitor') {
+            if (authUser?.role === 'User') {
                 navigate('/');
             } else {
                 navigate("/users");
@@ -112,8 +112,7 @@ const EditUser = () => {
                             <label className="fw-semibold mb-2 text-danger">User Role (Admin Only)</label>
                             <select className="form-select border-danger" value={role} onChange={(e) => setRole(e.target.value)}>
                                 <option value="Admin">Admin</option>
-                                <option value="Editor">Editor</option>
-                                <option value="Visitor">Visitor</option>
+                                <option value="User">User</option>
                             </select>
                         </div>
                     )}
@@ -162,23 +161,22 @@ const EditUser = () => {
                     ))}
                 </div>
 
-                {authUser?.role === 'Admin' && (
-                    <div className="mb-4 p-3 rounded" style={{ background: "#f8fafc", border: "1px dashed #cbd5e1" }}>
-                        <label className="fw-semibold mb-2 d-block">Resume (PDF)</label>
-                        
-                        {existingResume ? (
-                            <div className="d-flex align-items-center justify-content-between bg-white p-2 rounded border">
-                                <span className="text-muted small text-truncate me-2">Current: {existingResume}</span>
+                <div className="mb-4 p-3 rounded bg-white shadow-sm" style={{ border: "1px dashed #cbd5e1" }} id="resume">
+                    <label className="fw-semibold mb-2 d-block">Resume (PDF)</label>
+                    
+                    {existingResume ? (
+                        <div className="d-flex align-items-center justify-content-between bg-light p-2 rounded border">
+                            <span className="text-muted small text-truncate me-2">Current: {existingResume}</span>
+                            {authUser?.role === 'Admin' && (
                                 <button type="button" className="btn btn-sm btn-outline-danger py-1 px-2" onClick={handleRemoveResume}>
                                     Remove File
                                 </button>
-                            </div>
-                        ) : (
-                            <input type="file" className="form-control" accept=".pdf" onChange={(e) => setResume(e.target.files[0])} />
-                        )}
-                        <small className="text-muted mt-2 d-block">Only Admins can upload or remove resumes.</small>
-                    </div>
-                )}
+                            )}
+                        </div>
+                    ) : (
+                        <input type="file" className="form-control" accept=".pdf" onChange={(e) => setResume(e.target.files[0])} />
+                    )}
+                </div>
 
                 <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-primary fw-bold py-2 flex-grow-1">Update User</button>
