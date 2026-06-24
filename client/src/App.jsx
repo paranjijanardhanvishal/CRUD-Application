@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './theme.css';
 import { NetworkProvider } from './context/NetworkContext';
 import { AuthProvider } from './context/AuthContext';
+import { LoadingProvider } from './context/LoadingContext';
 
 import AppRoutes from './routes/AppRoutes';
 
@@ -12,7 +13,9 @@ function App() {
     <AuthProvider>
       <NetworkProvider>
         <BrowserRouter>
-          <AppRoutes />
+          <LoadingProvider>
+            <AppRoutes />
+          </LoadingProvider>
         </BrowserRouter>
       </NetworkProvider>
     </AuthProvider>
