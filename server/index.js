@@ -7,6 +7,7 @@ const UserModel = require('./models/Users');
 require('dotenv').config();
 const { verifyToken, verifyAdmin } = require('./middleware/auth');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 import { apiClient } from '../services/api';
 
 const LoadingContext = createContext();
@@ -9,29 +10,44 @@ export const useLoading = () => useContext(LoadingContext);
 export const LoadingProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [activeRequests, setActiveRequests] = useState(0);
+    const location = useLocation();
+
+    // Trigger loader on route changes
+    useEffect(() => {
+        setIsLoading(true);
+        const timer = setTimeout(() => {
+            if (activeRequests === 0) {
+                setIsLoading(false);
+            }
+        }, 500); // Route change loading duration
+        return () => clearTimeout(timer);
+    }, [location.pathname]);
+
+    useEffect(() => {
+        let timer;
+        if (activeRequests > 0 && !isLoading) {
+            setIsLoading(true);
+        } else if (activeRequests === 0 && isLoading) {
+            timer = setTimeout(() => {
+                setIsLoading(false);
+            }, 600); // 600ms delay to make it visible
+        }
+        return () => clearTimeout(timer);
+    }, [activeRequests, isLoading]);
 
     useEffect(() => {
         const handleRequest = (config) => {
             setActiveRequests((prev) => prev + 1);
-            setIsLoading(true);
             return config;
         };
 
         const handleResponse = (response) => {
-            setActiveRequests((prev) => {
-                const newCount = prev - 1;
-                if (newCount <= 0) setIsLoading(false);
-                return Math.max(0, newCount);
-            });
+            setActiveRequests((prev) => Math.max(0, prev - 1));
             return response;
         };
 
         const handleError = (error) => {
-            setActiveRequests((prev) => {
-                const newCount = prev - 1;
-                if (newCount <= 0) setIsLoading(false);
-                return Math.max(0, newCount);
-            });
+            setActiveRequests((prev) => Math.max(0, prev - 1));
             return Promise.reject(error);
         };
 
