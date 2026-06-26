@@ -8,7 +8,7 @@ require('dotenv').config();
 const { verifyToken, verifyAdmin } = require('./middleware/auth');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+let gfsBucket;
 const app = express();
 
 app.use(cors({
@@ -40,22 +40,18 @@ app.get('/api/resumes/:filename', (req, res) => {
                 return res.status(500).json({ message: "Server error" });
             }
         }
-
-        const filePath = path.join(__dirname, 'uploads', req.params.filename);
-        res.sendFile(filePath, err => {
-            if (err) res.status(404).send('File not found');
+        if (!gfsBucket) {
+            return res.status(500).send('GridFS is not initialized yet');
+        }
+        const downloadStream = gfsBucket.openDownloadStreamByName(req.params.filename);
+        downloadStream.on('error', (error) => {
+            res.status(404).send('File not found');
         });
+        downloadStream.pipe(res);
     });
 });
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads');
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({ storage });
 
@@ -80,7 +76,19 @@ app.get('/getUser/:id', verifyToken, (req, res) => {
         .catch(err => res.json(err));
 });
 
-app.post('/create', verifyToken, upload.single('resume'), (req, res) => {
+app.post('/create', verifyToken, upload.single('resume'), async (req, res) => {
+    let filename = "";
+    if (req.file) {
+        filename = Date.now() + path.extname(req.file.originalname);
+        const uploadStream = gfsBucket.openUploadStream(filename, {
+            contentType: req.file.mimetype
+        });
+        uploadStream.end(req.file.buffer);
+        await new Promise((resolve, reject) => {
+            uploadStream.on('finish', resolve);
+            uploadStream.on('error', reject);
+        });
+    }
 
     const userData = {
         name: req.body.name,
@@ -89,7 +97,7 @@ app.post('/create', verifyToken, upload.single('resume'), (req, res) => {
         gender: req.body.gender,
         education: req.body.education,
         skills: JSON.parse(req.body.skills || "[]"),
-        resume: req.file ? req.file.filename : ""
+        resume: filename
     };
 
     UserModel.create(userData)
@@ -97,11 +105,24 @@ app.post('/create', verifyToken, upload.single('resume'), (req, res) => {
         .catch(err => res.json(err));
 });
 
-app.put('/updateUser/:id', verifyToken, upload.single('resume'), (req, res) => {
+app.put('/updateUser/:id', verifyToken, upload.single('resume'), async (req, res) => {
     const id = req.params.id;
 
     if (req.user.role === 'User' && req.user.id !== id) {
         return res.status(403).json({ message: "Access Denied" });
+    }
+
+    let filename;
+    if (req.file) {
+        filename = Date.now() + path.extname(req.file.originalname);
+        const uploadStream = gfsBucket.openUploadStream(filename, {
+            contentType: req.file.mimetype
+        });
+        uploadStream.end(req.file.buffer);
+        await new Promise((resolve, reject) => {
+            uploadStream.on('finish', resolve);
+            uploadStream.on('error', reject);
+        });
     }
 
     const updateData = {
@@ -113,8 +134,8 @@ app.put('/updateUser/:id', verifyToken, upload.single('resume'), (req, res) => {
         skills: JSON.parse(req.body.skills || "[]")
     };
 
-    if (req.file) {
-        updateData.resume = req.file.filename;
+    if (filename) {
+        updateData.resume = filename;
     }
 
     UserModel.findByIdAndUpdate(id, updateData, { new: true })
@@ -149,6 +170,10 @@ const initAdmin = async () => {
 
 mongoose.connection.on('connected', () => {
     console.log('MongoDB Connected');
+    const db = mongoose.connection.db;
+    gfsBucket = new mongoose.mongo.GridFSBucket(db, {
+        bucketName: 'resumes'
+    });
     initAdmin();
 });
 
