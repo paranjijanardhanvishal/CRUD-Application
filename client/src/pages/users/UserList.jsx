@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { FaSearch, FaFilter, FaPlus, FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import { fetchUsers, deleteUser } from "../../services/api";
@@ -6,24 +6,106 @@ import { fetchUsers, deleteUser } from "../../services/api";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const UserList = () => {
-    const [users, setUsers] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);
     const [search, setSearch] = useState("");
     const [filterOption, setFilterOption] = useState("All");
 
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [displayedCount, setDisplayedCount] = useState(30);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+    const observer = useRef();
+
     useEffect(() => {
         const loadUsers = async () => {
-            const data = await fetchUsers();
-            if (data) setUsers(data);
+            try {
+                setIsLoading(true);
+                const data = await fetchUsers();
+                if (data) {
+                    setAllUsers(data);
+                }
+                setError(null);
+            } catch (err) {
+                setError(err.message || "Failed to fetch users");
+            } finally {
+                setIsLoading(false);
+            }
         };
         loadUsers();
     }, []);
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this user?")) {
-            await deleteUser(id);
-            setUsers(users.filter(user => user._id !== id));
+            try {
+                await deleteUser(id);
+                setAllUsers(allUsers.filter(user => user._id !== id));
+            } catch (error) {
+                alert("Failed to delete user.");
+            }
         }
     };
+
+    const filteredUsers = useMemo(() => {
+        let result = allUsers;
+
+        if (search) {
+            const query = search.toLowerCase();
+            result = result.filter(user => {
+                return (
+                    (user.name || "").toLowerCase().includes(query) ||
+                    (user.email || "").toLowerCase().includes(query) ||
+                    String(user.age || "").toLowerCase().includes(query) ||
+                    (user.gender || "").toLowerCase().includes(query) ||
+                    (user.role || "").toLowerCase().includes(query) ||
+                    (user.education || "").toLowerCase().includes(query) ||
+                    (user.resume || "").toLowerCase().includes(query) ||
+                    (user.skills && user.skills.some(skill => (skill || "").toLowerCase().includes(query)))
+                );
+            });
+        }
+
+        if (filterOption !== "All") {
+            result = result.filter(user => {
+                if (filterOption === "Male") return user.gender?.toLowerCase() === "male";
+                if (filterOption === "Female") return user.gender?.toLowerCase() === "female";
+                if (filterOption === "WithResume") return !!user.resume;
+                if (filterOption === "WithoutResume") return !user.resume;
+                return true;
+            });
+        }
+
+        return result;
+    }, [allUsers, search, filterOption]);
+
+    const displayedUsers = useMemo(() => {
+        return filteredUsers.slice(0, displayedCount);
+    }, [filteredUsers, displayedCount]);
+
+    const hasMore = displayedCount < filteredUsers.length;
+
+    const lastUserElementRef = useCallback(node => {
+        if (isLoading || isFetchingMore) return;
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setIsFetchingMore(true);
+                // simulate network delay for chunk loading to match UI experience
+                setTimeout(() => {
+                    setDisplayedCount(prev => prev + 30);
+                    setIsFetchingMore(false);
+                }, 1000);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [isLoading, isFetchingMore, hasMore]);
+
+    // Reset displayedCount when filters change
+    useEffect(() => {
+        setDisplayedCount(30);
+    }, [search, filterOption]);
 
     return (
         <div className="bg-white p-4 rounded shadow-sm" style={{ border: "1px solid #dbeafe" }}>
@@ -43,7 +125,7 @@ const UserList = () => {
                         </span>
                         <input
                             type="text"
-                            placeholder="Search Name or Age"
+                            placeholder="Global Search..."
                             className="form-control"
                             style={{ borderLeft: "none", boxShadow: "none", borderRadius: "0 8px 8px 0" }}
                             value={search}
@@ -71,101 +153,117 @@ const UserList = () => {
                 </div>
             </div>
 
-            <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                    <thead style={{ background: "#eff6ff", color: "#1e40af" }}>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Age</th>
-                            <th>Gender</th>
-                            <th>Role</th>
-                            <th>Education</th>
-                            <th>Resume</th>
-                            <th style={{ minWidth: "200px" }}>Skills</th>
-                            <th style={{ minWidth: "180px" }}>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {users
-                            .filter(user =>
-                                (user.name || "").toLowerCase().includes(search.toLowerCase()) ||
-                                String(user.age || "").toLowerCase().includes(search.toLowerCase())
-                            )
-                            .filter(user => {
-                                if (filterOption === "All") return true;
-                                if (filterOption === "Male") return user.gender?.toLowerCase() === "male";
-                                if (filterOption === "Female") return user.gender?.toLowerCase() === "female";
-                                if (filterOption === "WithResume") return !!user.resume;
-                                if (filterOption === "WithoutResume") return !user.resume;
-                                return true;
-                            })
-                            .map((user) => (
-                                <tr key={user._id}>
-                                    <td className="fw-semibold">{user.name}</td>
-                                    <td>{user.email}</td>
-                                    <td>{user.age}</td>
-                                    <td>
-                                        <span className={`badge ${user.gender?.toLowerCase() === 'female' ? 'bg-danger' : 'bg-success'}`}>
-                                            {user.gender}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className={`badge ${user.role === 'Admin' ? 'bg-dark' : 'bg-secondary'}`}>
-                                            {user.role || 'User'}
-                                        </span>
-                                    </td>
-                                    <td>{user.education}</td>
-                                    <td>
-                                        {user.resume && !user.resume.startsWith('blob:') && user._id && !user._id.startsWith('temp_') ? (
-                                            <a
-                                                href={`${API_URL}/api/resumes/${user.resume}?token=${localStorage.getItem('token')}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="btn btn-sm text-white d-inline-flex align-items-center gap-1"
-                                                style={{ background: "#6366f1", borderRadius: "6px" }}
-                                            >
-                                                <FaEye /> View
-                                            </a>
-                                        ) : user.resume ? (
-                                            <span className="text-muted small">Offline Cached</span>
-                                        ) : (
-                                            <span className="text-muted small">None</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {user.skills?.length > 0 ? (
-                                            user.skills.map((skill, index) => (
-                                                <span key={index} className="badge bg-primary me-1 mb-1">{skill}</span>
-                                            ))
-                                        ) : "N/A"}
-                                    </td>
-                                    <td>
-                                        <Link
-                                            to={`/users/edit/${user._id}`}
-                                            className="btn btn-sm text-white me-2 d-inline-flex align-items-center gap-1"
-                                            style={{ background: "#10b981", borderRadius: "6px" }}
-                                        >
-                                            <FaEdit />
-                                        </Link>
-                                        <button
-                                            className="btn btn-sm text-white d-inline-flex align-items-center gap-1"
-                                            style={{ background: "#ef4444", borderRadius: "6px" }}
-                                            onClick={() => handleDelete(user._id)}
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        {users.length === 0 && (
+            {isLoading && (
+                <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-2 text-muted">Fetching users...</p>
+                </div>
+            )}
+
+            {error && (
+                <div className="alert alert-danger" role="alert">
+                    {error}
+                </div>
+            )}
+
+            {!isLoading && !error && (
+                <div className="table-responsive">
+                    <table className="table table-hover align-middle">
+                        <thead style={{ background: "#eff6ff", color: "#1e40af" }}>
                             <tr>
-                                <td colSpan="8" className="text-center py-4 text-muted">No users found.</td>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Role</th>
+                                <th>Education</th>
+                                <th>Resume</th>
+                                <th style={{ minWidth: "200px" }}>Skills</th>
+                                <th style={{ minWidth: "180px" }}>Action</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {displayedUsers.map((user, index) => {
+                                const isLastUser = displayedUsers.length === index + 1;
+                                return (
+                                    <tr key={user._id} ref={isLastUser ? lastUserElementRef : null}>
+                                        <td className="fw-semibold">{user.name}</td>
+                                        <td>{user.email}</td>
+                                        <td>{user.age}</td>
+                                        <td>
+                                            <span className={`badge ${user.gender?.toLowerCase() === 'female' ? 'bg-danger' : 'bg-success'}`}>
+                                                {user.gender}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className={`badge ${user.role === 'Admin' ? 'bg-dark' : 'bg-secondary'}`}>
+                                                {user.role || 'User'}
+                                            </span>
+                                        </td>
+                                        <td>{user.education}</td>
+                                        <td>
+                                            {user.resume && !user.resume.startsWith('blob:') && user._id && !String(user._id).startsWith('temp_') ? (
+                                                <a
+                                                    href={`${API_URL}/api/resumes/${user.resume}?token=${localStorage.getItem('token')}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="btn btn-sm text-white d-inline-flex align-items-center gap-1"
+                                                    style={{ background: "#6366f1", borderRadius: "6px" }}
+                                                >
+                                                    <FaEye /> View
+                                                </a>
+                                            ) : user.resume ? (
+                                                <span className="text-muted small">Offline Cached</span>
+                                            ) : (
+                                                <span className="text-muted small">None</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {user.skills?.length > 0 ? (
+                                                user.skills.map((skill, index) => (
+                                                    <span key={index} className="badge bg-primary me-1 mb-1">{skill}</span>
+                                                ))
+                                            ) : "N/A"}
+                                        </td>
+                                        <td>
+                                            <Link
+                                                to={`/users/edit/${user._id}`}
+                                                className="btn btn-sm text-white me-2 d-inline-flex align-items-center gap-1"
+                                                style={{ background: "#10b981", borderRadius: "6px" }}
+                                            >
+                                                <FaEdit />
+                                            </Link>
+                                            <button
+                                                className="btn btn-sm text-white d-inline-flex align-items-center gap-1"
+                                                style={{ background: "#ef4444", borderRadius: "6px" }}
+                                                onClick={() => handleDelete(user._id)}
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {filteredUsers.length === 0 && (
+                                <tr>
+                                    <td colSpan="9" className="text-center py-4 text-muted">No users found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    
+                    {isFetchingMore && (
+                        <div className="text-center py-3">
+                            <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                <span className="visually-hidden">Loading more...</span>
+                            </div>
+                            <span className="ms-2 text-muted small">Loading more users...</span>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

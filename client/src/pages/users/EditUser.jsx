@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { fetchUserById, updateUser, removeResume, updateRoleAPI } from "../../services/api";
+import { fetchUserById, updateUser, removeResume, updateRoleAPI, getAllSkills } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
 const EditUser = () => {
@@ -18,6 +18,17 @@ const EditUser = () => {
     const [existingResume, setExistingResume] = useState("");
     const [role, setRole] = useState("User");
     const [error, setError] = useState("");
+
+    const [availableSkills, setAvailableSkills] = useState([]);
+    const [newSkill, setNewSkill] = useState("");
+
+    useEffect(() => {
+        const loadSkills = async () => {
+            const fetchedSkills = await getAllSkills();
+            setAvailableSkills(fetchedSkills);
+        };
+        loadSkills();
+    }, []);
 
     useEffect(() => {
         const loadUser = async () => {
@@ -42,6 +53,20 @@ const EditUser = () => {
             setSkills([...skills, value]);
         } else {
             setSkills(skills.filter(skill => skill !== value));
+        }
+    };
+
+    const handleAddNewSkill = () => {
+        const trimmedSkill = newSkill.trim();
+        if (trimmedSkill) {
+            const lowerSkill = trimmedSkill.toLowerCase();
+            if (!availableSkills.some(s => s.toLowerCase() === lowerSkill)) {
+                setAvailableSkills([...availableSkills, trimmedSkill]);
+            }
+            if (!skills.some(s => s.toLowerCase() === lowerSkill)) {
+                setSkills([...skills, trimmedSkill]);
+            }
+            setNewSkill("");
         }
     };
 
@@ -153,12 +178,25 @@ const EditUser = () => {
 
                 <div className="mb-3">
                     <label className="fw-semibold d-block mb-2">Skills</label>
-                    {['Java', 'Python', 'React', 'MongoDB'].map(skill => (
-                        <div className="form-check form-check-inline" key={skill}>
-                            <input className="form-check-input" type="checkbox" value={skill} checked={skills.includes(skill)} onChange={handleSkillChange} />
-                            <label className="form-check-label">{skill}</label>
-                        </div>
-                    ))}
+                    <div className="d-flex flex-wrap gap-2 mb-2">
+                        {availableSkills.map(skill => (
+                            <div className="form-check form-check-inline m-0" key={skill}>
+                                <input className="form-check-input" type="checkbox" value={skill} checked={skills.includes(skill)} onChange={handleSkillChange} />
+                                <label className="form-check-label">{skill}</label>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="input-group mt-2" style={{ maxWidth: "300px" }}>
+                        <input 
+                            type="text" 
+                            className="form-control form-control-sm" 
+                            placeholder="Add custom skill..." 
+                            value={newSkill} 
+                            onChange={(e) => setNewSkill(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNewSkill(); } }}
+                        />
+                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={handleAddNewSkill}>Add</button>
+                    </div>
                 </div>
 
                 <div className="mb-4 p-3 rounded bg-white shadow-sm" style={{ border: "1px dashed #cbd5e1" }} id="resume">

@@ -128,3 +128,32 @@ export const removeResume = async (id) => {
 export const updateRoleAPI = async (id, role) => {
     return await apiClient.put(`/updateRole/${id}`, { role });
 };
+
+export const getAllSkills = async () => {
+    try {
+        const users = await fetchUsers();
+        const skillSet = new Map(); // Use map to keep first encountered case but ensure uniqueness case-insensitively
+        
+        if (users && Array.isArray(users)) {
+            users.forEach(user => {
+                if (user.skills && Array.isArray(user.skills)) {
+                    user.skills.forEach(skill => {
+                        if (skill) {
+                            const trimmedSkill = skill.trim();
+                            const lowerSkill = trimmedSkill.toLowerCase();
+                            if (!skillSet.has(lowerSkill)) {
+                                skillSet.set(lowerSkill, trimmedSkill);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Extract values, sort alphabetically case-insensitively
+        return Array.from(skillSet.values()).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    } catch (error) {
+        console.error("Error fetching skills:", error);
+        return [];
+    }
+};

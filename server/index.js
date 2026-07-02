@@ -12,7 +12,7 @@ let gfsBucket;
 const app = express();
 
 app.use(cors({
-    origin: ["https://crud-app-testing.netlify.app", "http://localhost:5173", "http://localhost:3000"],
+    origin: ["https://crud-app-testing.netlify.app", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
@@ -59,7 +59,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/CRUD');
 
 app.get('/', verifyToken, (req, res) => {
     const query = req.user.role === 'Admin' ? {} : { _id: req.user.id };
-    UserModel.find(query)
+    UserModel.find(query).limit(5000)
         .then(users => res.json(users))
         .catch(err => res.json(err));
 });
