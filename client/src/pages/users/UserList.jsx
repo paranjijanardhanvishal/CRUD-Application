@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { FaSearch, FaFilter, FaPlus, FaEdit, FaTrash, FaEye } from "react-icons/fa";
-import { fetchUsers, deleteUser } from "../../services/api";
+import { fetchUsers, deleteUser, getAllSkills } from "../../services/api";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -9,6 +9,8 @@ const UserList = () => {
     const [allUsers, setAllUsers] = useState([]);
     const [search, setSearch] = useState("");
     const [filterOption, setFilterOption] = useState("All");
+    const [skillFilter, setSkillFilter] = useState("All");
+    const [availableSkills, setAvailableSkills] = useState([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -33,6 +35,14 @@ const UserList = () => {
             }
         };
         loadUsers();
+    }, []);
+
+    useEffect(() => {
+        const loadSkills = async () => {
+            const skills = await getAllSkills();
+            setAvailableSkills(skills);
+        };
+        loadSkills();
     }, []);
 
     const handleDelete = async (id) => {
@@ -74,9 +84,13 @@ const UserList = () => {
                 return true;
             });
         }
+        if (skillFilter !== "All") {
+            const query = skillFilter.toLowerCase();
+            result = result.filter(user => user.skills && user.skills.some(skill => (skill || "").toLowerCase() === query));
+        }
 
         return result;
-    }, [allUsers, search, filterOption]);
+    }, [allUsers, search, filterOption, skillFilter]);
 
     const displayedUsers = useMemo(() => {
         return filteredUsers.slice(0, displayedCount);
@@ -105,7 +119,7 @@ const UserList = () => {
     // Reset displayedCount when filters change
     useEffect(() => {
         setDisplayedCount(30);
-    }, [search, filterOption]);
+    }, [search, filterOption, skillFilter]);
 
     return (
         <div className="bg-white p-4 rounded shadow-sm" style={{ border: "1px solid #dbeafe" }}>
@@ -148,6 +162,23 @@ const UserList = () => {
                             <option value="Female">Female Only</option>
                             <option value="WithResume">Has Resume</option>
                             <option value="WithoutResume">No Resume</option>
+                        </select>
+                    </div>
+
+                    <div className="input-group" style={{ maxWidth: "220px" }}>
+                        <span className="input-group-text bg-white" style={{ borderRight: "none", borderRadius: "8px 0 0 8px" }}>
+                            <FaFilter color="#94a3b8" />
+                        </span>
+                        <select
+                            className="form-select"
+                            style={{ borderLeft: "none", cursor: "pointer", boxShadow: "none", borderRadius: "0 8px 8px 0" }}
+                            value={skillFilter}
+                            onChange={(e) => setSkillFilter(e.target.value)}
+                        >
+                            <option value="All">All Skills</option>
+                            {availableSkills.map(skill => (
+                                <option key={skill} value={skill}>{skill}</option>
+                            ))}
                         </select>
                     </div>
                 </div>

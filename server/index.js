@@ -55,7 +55,7 @@ const storage = multer.memoryStorage();
 
 const upload = multer({ storage });
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/CRUD');
+// MongoDB connection is now handled in startServer()
 
 app.get('/', verifyToken, (req, res) => {
     const query = req.user.role === 'Admin' ? {} : { _id: req.user.id };
@@ -168,18 +168,7 @@ const initAdmin = async () => {
     }
 };
 
-mongoose.connection.on('connected', () => {
-    console.log('MongoDB Connected');
-    const db = mongoose.connection.db;
-    gfsBucket = new mongoose.mongo.GridFSBucket(db, {
-        bucketName: 'resumes'
-    });
-    initAdmin();
-});
-
-mongoose.connection.on('error', (err) => {
-    console.log(err);
-});
+// Connection logic moved to startServer()
 
 app.put('/removeResume/:id', verifyToken, verifyAdmin, async (req, res) => {
     try {
@@ -211,7 +200,26 @@ app.put('/updateRole/:id', verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+const startServer = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/CRUD');
+        console.log('MongoDB Connected');
+        
+        const db = mongoose.connection.db;
+        gfsBucket = new mongoose.mongo.GridFSBucket(db, {
+            bucketName: 'resumes'
+        });
+        
+        await initAdmin();
+
+        const PORT = process.env.PORT || 3001;
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to connect to MongoDB:', error.message);
+        process.exit(1);
+    }
+};
+
+startServer();
