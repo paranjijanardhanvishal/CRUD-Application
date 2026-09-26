@@ -18,6 +18,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// If DB is not connected, instantly return 503 so frontend can fallback to IndexedDB immediately without hanging
+app.use((req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ message: "Database is offline or starting up." });
+    }
+    next();
+});
+
 app.use('/auth', require('./routes/auth'));
 
 // Protected resume file serving
@@ -220,7 +228,8 @@ const startServer = async () => {
 
     } catch (error) {
         console.error('Failed to connect to MongoDB:', error.message);
-        process.exit(1);
+        // We do not process.exit(1) here so the server stays alive 
+        // to return 503s, allowing the frontend's offline fallback to work instantly.
     }
 };
 
