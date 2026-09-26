@@ -53,14 +53,11 @@ export const fetchUserById = async (id) => {
 };
 
 export const createUser = async (formData) => {
-    if (navigator.onLine) {
-        try {
-            return await apiClient.post(`/create`, formData);
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
-    } else {
+    try {
+        if (!navigator.onLine) throw new Error("Offline");
+        return await apiClient.post(`/create`, formData);
+    } catch (error) {
+        console.log("Fallback to offline create");
         const file = formData.get("resume");
         const payload = {
             name: formData.get("name"),
@@ -79,14 +76,11 @@ export const createUser = async (formData) => {
 };
 
 export const updateUser = async (id, formData) => {
-    if (navigator.onLine) {
-        try {
-            return await apiClient.put(`/updateUser/${id}`, formData);
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
-    } else {
+    try {
+        if (!navigator.onLine) throw new Error("Offline");
+        return await apiClient.put(`/updateUser/${id}`, formData);
+    } catch (error) {
+        console.log("Fallback to offline update");
         const file = formData.get("resume");
         const payload = {
             id,
@@ -105,24 +99,22 @@ export const updateUser = async (id, formData) => {
 };
 
 export const deleteUser = async (id) => {
-    if (navigator.onLine) {
-        try {
-            await apiClient.delete(`/deleteUser/${id}`);
-            await deleteStudentFromIndexedDB(id);
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
-    } else {
+    try {
+        if (!navigator.onLine) throw new Error("Offline");
+        await apiClient.delete(`/deleteUser/${id}`);
+        await deleteStudentFromIndexedDB(id);
+    } catch (error) {
+        console.log("Fallback to offline delete");
         await addPendingOperation({ type: 'DELETE', payload: { id } });
         await deleteStudentFromIndexedDB(id);
     }
 };
 
 export const removeResume = async (id) => {
-    if (navigator.onLine) {
+    try {
+        if (!navigator.onLine) throw new Error("Offline");
         return await apiClient.put(`/removeResume/${id}`);
-    } else {
+    } catch (error) {
         alert("Cannot remove resume while offline");
         throw new Error("Offline");
     }
