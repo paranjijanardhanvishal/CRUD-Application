@@ -79,6 +79,9 @@ app.get('/getUser/:id', verifyToken, (req, res) => {
 app.post('/create', verifyToken, upload.single('resume'), async (req, res) => {
     let filename = "";
     if (req.file) {
+        if (!gfsBucket) {
+            return res.status(503).json({ message: "Database not fully initialized yet." });
+        }
         filename = Date.now() + path.extname(req.file.originalname);
         const uploadStream = gfsBucket.openUploadStream(filename, {
             contentType: req.file.mimetype
@@ -114,6 +117,9 @@ app.put('/updateUser/:id', verifyToken, upload.single('resume'), async (req, res
 
     let filename;
     if (req.file) {
+        if (!gfsBucket) {
+            return res.status(503).json({ message: "Database not fully initialized yet." });
+        }
         filename = Date.now() + path.extname(req.file.originalname);
         const uploadStream = gfsBucket.openUploadStream(filename, {
             contentType: req.file.mimetype
@@ -212,10 +218,6 @@ const startServer = async () => {
         
         await initAdmin();
 
-        const PORT = process.env.PORT || 3001;
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
     } catch (error) {
         console.error('Failed to connect to MongoDB:', error.message);
         process.exit(1);
@@ -223,3 +225,8 @@ const startServer = async () => {
 };
 
 startServer();
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+});
