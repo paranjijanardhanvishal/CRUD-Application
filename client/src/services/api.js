@@ -10,7 +10,10 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 // Create an Axios instance to attach the token automatically
-export const apiClient = axios.create({ baseURL: API_URL });
+export const apiClient = axios.create({ 
+    baseURL: API_URL,
+    timeout: 2000 
+});
 apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {

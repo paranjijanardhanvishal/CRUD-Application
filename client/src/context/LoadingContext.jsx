@@ -35,14 +35,14 @@ export const LoadingProvider = ({ children }) => {
         return () => clearTimeout(timer);
     }, [activeRequests, isLoading]);
 
-    // Safety timeout: max 5 seconds loading
+    // Safety timeout: max 2 seconds loading
     useEffect(() => {
         let maxTimer;
         if (isLoading) {
             maxTimer = setTimeout(() => {
                 setIsLoading(false);
                 setActiveRequests(0); // Reset requests to prevent immediate re-trigger
-            }, 5000);
+            }, 2000);
         }
         return () => clearTimeout(maxTimer);
     }, [isLoading]);
